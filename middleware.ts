@@ -90,11 +90,13 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api/auth (NextAuth.js routes)
+     * - api/test-db (Database test endpoint)
+     * - api/test-auth (Auth test endpoint)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api/auth|api/test-db|api/test-auth|_next/static|_next/image|favicon.ico|public).*)',
   ],
 }
