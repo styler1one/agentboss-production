@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash,
         role: role as 'CLIENT' | 'EXPERT' | 'ADMIN',
-        emailVerified: false,
         profileComplete: false,
         ...(role === 'CLIENT' && companyName && {
           clientProfile: {
