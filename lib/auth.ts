@@ -9,20 +9,9 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Temporarily disable adapter until database is updated
+  // adapter: PrismaAdapter(prisma),
   providers: [
-    // Email Magic Link Authentication
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    }),
     // Email/Password Authentication
     CredentialsProvider({
       name: 'credentials',
