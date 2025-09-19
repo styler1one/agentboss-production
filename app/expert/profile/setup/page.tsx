@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
+import { FileUpload } from '@/components/ui/file-upload'
 
 export default function ExpertProfileSetup() {
   const { data: session, update } = useSession()
@@ -34,6 +35,12 @@ export default function ExpertProfileSetup() {
     name: string
     category: string
     proficiency: number
+  }>>([])
+  
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    url: string
+    filename: string
+    type: string
   }>>([])
 
   const skillCategories = [
@@ -152,6 +159,28 @@ export default function ExpertProfileSetup() {
   const getProficiencyLabel = (level: number) => {
     const labels = ['Beginner', 'Basic', 'Intermediate', 'Advanced', 'Expert']
     return labels[level - 1] || 'Intermediate'
+  }
+
+  const handleFileUpload = (url: string, filename: string) => {
+    const fileType = filename.split('.').pop()?.toLowerCase() || ''
+    setUploadedFiles(prev => [...prev, {
+      url,
+      filename,
+      type: fileType
+    }])
+    
+    toast({
+      title: "File Uploaded",
+      description: `${filename} has been added to your portfolio.`,
+    })
+  }
+
+  const removeFile = (filename: string) => {
+    setUploadedFiles(prev => prev.filter(file => file.filename !== filename))
+    toast({
+      title: "File Removed",
+      description: "File has been removed from your portfolio.",
+    })
   }
 
   return (
@@ -383,6 +412,63 @@ export default function ExpertProfileSetup() {
                   onChange={handleChange}
                   placeholder="https://linkedin.com/in/yourprofile"
                 />
+              </div>
+
+              {/* Portfolio & Documents */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-base font-semibold">Portfolio & Documents</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Upload your portfolio, CV, certificates, or other relevant documents
+                  </p>
+                </div>
+
+                <FileUpload 
+                  onUploadComplete={handleFileUpload}
+                  multiple={true}
+                  className="w-full"
+                />
+
+                {/* Uploaded Files */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Uploaded Files</Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center">
+                              {file.type === 'pdf' ? '📄' : 
+                               ['jpg', 'jpeg', 'png', 'webp'].includes(file.type) ? '🖼️' : '📎'}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{file.filename.split('/').pop()}</p>
+                              <p className="text-xs text-muted-foreground">{file.type.toUpperCase()}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeFile(file.filename)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}
