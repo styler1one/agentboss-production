@@ -12,7 +12,9 @@ export default withAuth(
       '/auth/signin',
       '/auth/register',
       '/auth/error',
-      '/api/auth'
+      '/api/auth',
+      '/api/test-db',
+      '/api/test-auth'
     ]
 
     // Check if route is public
