@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import SessionProvider from '@/components/providers/SessionProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'AgentBoss Production Platform',
-  description: 'Expert Matching & Agent Marketplace for AI Services',
+  description: 'Expert Matching & Agent Marketplace Platform',
   keywords: ['AI', 'Expert Matching', 'Agent Marketplace', 'AgentBoss'],
   authors: [{ name: 'AgentBoss Team' }],
   creator: 'AgentBoss',
