@@ -50,7 +50,11 @@ model ClientProfile {
   userId      String   @unique
   companyName String
   industry    String?
-  description String
+  description String   @default("")
+  website     String?
+  companySize String?
+  location    String?
+  phone       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -61,14 +65,21 @@ model ClientProfile {
 }
 
 model ExpertProfile {
-  id                    String             @id @default(cuid())
-  userId                String             @unique
-  firstName             String
-  lastName              String
-  bio                   String             @default("")
-  verificationStatus    String             @default("PENDING")
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  firstName          String
+  lastName           String
+  bio                String   @default("")
+  expertise          String?
+  yearsExperience    String?
+  hourlyRate         Decimal? @db.Decimal(10,2)
+  location           String?
+  phone              String?
+  website            String?
+  linkedIn           String?
+  verificationStatus String   @default("PENDING") // PENDING, BASIC, PREMIUM, CERTIFIED
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

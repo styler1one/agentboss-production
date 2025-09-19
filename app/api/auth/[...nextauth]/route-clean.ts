@@ -64,11 +64,17 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role
         token.profileComplete = user.profileComplete
       }
+      
+      // Handle session updates
+      if (trigger === 'update' && session?.user?.profileComplete !== undefined) {
+        token.profileComplete = session.user.profileComplete
+      }
+      
       return token
     },
     async session({ session, token }) {

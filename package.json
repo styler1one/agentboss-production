@@ -9,19 +9,30 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
+    "db:update-client-profile": "node scripts/update-client-profile-schema.js",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.7.1",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.3",
     "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.3.1",
+    "lucide-react": "^0.544.0",
     "next": "14.2.32",
     "next-auth": "^4.24.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "dotenv": "^16.3.1"
+    "react-hook-form": "^7.62.0",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
