@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
             create: {
               firstName,
               lastName,
-              bio: '',
+              bio: `AI Expert - ${firstName} ${lastName}`,
               verificationStatus: 'PENDING'
             }
           }

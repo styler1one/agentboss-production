@@ -65,7 +65,7 @@ model ExpertProfile {
   userId                String             @unique
   firstName             String
   lastName              String
-  bio                   String             @default("")
+  bio                   String
   verificationStatus    String             @default("PENDING")
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
