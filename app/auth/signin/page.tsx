@@ -3,6 +3,7 @@
 import { signIn, getSession } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
@@ -127,6 +128,15 @@ export default function SignIn() {
                 <span className="ml-2">Sign in with Google</span>
               </button>
             </div>
+          </div>
+
+          <div className="text-center mt-6">
+            <span className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Create account
+              </Link>
+            </span>
           </div>
         </form>
       </div>
