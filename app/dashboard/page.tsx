@@ -106,11 +106,11 @@ export default function Dashboard() {
                   )}
                   {userRole === 'ADMIN' && (
                     <>
-                      <Link href="/admin/users" className="block bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-center">
-                        Manage Users
+                      <Link href="/admin" className="block bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-center">
+                        Admin Dashboard
                       </Link>
-                      <Link href="/admin/dashboard" className="block bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-center">
-                        Admin Panel
+                      <Link href="/admin/settings" className="block bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 text-center">
+                        Platform Settings
                       </Link>
                     </>
                   )}
