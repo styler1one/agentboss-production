@@ -1,0 +1,608 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================
+// USERS & AUTHENTICATION
+// =============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   // nullable for OAuth users
+  role          UserRole  @default(CLIENT)
+  emailVerified Boolean   @default(false)
+  profileComplete Boolean @default(false)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  clientProfile   ClientProfile?
+  expertProfile   ExpertProfile?
+  projects        Project[]       @relation("ClientProjects")
+  applications    ProjectApplication[]
+  expertContracts Contract[]      @relation("ExpertContracts")
+  clientContracts Contract[]      @relation("ClientContracts")
+  agents          Agent[]
+  purchases       AgentPurchase[]
+  reviews         Review[]        @relation("ReviewerReviews")
+  receivedReviews Review[]        @relation("RevieweeReviews")
+  sentMessages    Message[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  paymentsMade    Payment[]       @relation("PayerPayments")
+  paymentsReceived Payment[]      @relation("PayeePayments")
+
+  @@map("users")
+}
+
+enum UserRole {
+  CLIENT
+  EXPERT
+  ADMIN
+  SUPER_ADMIN
+}
+
+// =============================================
+// USER PROFILES
+// =============================================
+
+model ClientProfile {
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  companyName String
+  companySize CompanySize?
+  industry    Industry?
+  website     String?
+  description String?     @db.Text
+  budgetRange BudgetRange?
+  contactPerson String?
+  phone       String?
+  address     Json?       // {street, city, country, postal_code}
+  preferences Json?       // communication preferences, project types
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model ExpertProfile {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  firstName             String
+  lastName              String
+  title                 String?            // "Senior AI Engineer", "ML Consultant"
+  bio                   String?            @db.Text
+  hourlyRate            Decimal?           @db.Decimal(10, 2)
+  availabilityHours     Int                @default(40) // hours per week
+  timezone              String?
+  skills                Json?              // array of skill objects with proficiency levels
+  experienceYears       Int?
+  education             Json?              // array of education objects
+  certifications        Json?              // array of certification objects
+  portfolioUrl          String?
+  linkedinUrl           String?
+  githubUrl             String?
+  languages             Json?              // spoken languages with proficiency
+  verificationStatus    VerificationStatus @default(PENDING)
+  verificationDocuments Json?              // array of document references
+  successRate           Decimal            @default(0.00) @db.Decimal(5, 2) // percentage
+  totalProjects         Int                @default(0)
+  totalEarnings         Decimal            @default(0.00) @db.Decimal(12, 2)
+  averageRating         Decimal            @default(0.00) @db.Decimal(3, 2)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("expert_profiles")
+}
+
+enum CompanySize {
+  SMALL_1_10
+  MEDIUM_11_50
+  LARGE_51_200
+  ENTERPRISE_201_1000
+  CORPORATION_1000_PLUS
+}
+
+enum Industry {
+  HEALTHCARE
+  FINANCE
+  LOGISTICS
+  MANUFACTURING
+  ECOMMERCE
+  TECHNOLOGY
+  OTHER
+}
+
+enum BudgetRange {
+  RANGE_25K_50K
+  RANGE_50K_100K
+  RANGE_100K_250K
+  RANGE_250K_PLUS
+  UNKNOWN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+// =============================================
+// PROJECTS & MATCHING
+// =============================================
+
+model Project {
+  id                String            @id @default(cuid())
+  clientId          String
+  title             String
+  description       String            @db.Text
+  requirements      Json?             // technical requirements, deliverables
+  budgetMin         Decimal?          @db.Decimal(12, 2)
+  budgetMax         Decimal?          @db.Decimal(12, 2)
+  timelineWeeks     Int?
+  startDate         DateTime?
+  projectType       ProjectType
+  industry          Industry?
+  skillsRequired    Json?             // array of required skills
+  experienceLevel   ExperienceLevel?
+  teamSize          Int               @default(1)
+  status            ProjectStatus     @default(DRAFT)
+  applicationsCount Int               @default(0)
+  featured          Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  publishedAt       DateTime?
+  deadline          DateTime?
+
+  // Relations
+  client       User                 @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  applications ProjectApplication[]
+  contracts    Contract[]
+  conversations Conversation[]
+
+  @@map("projects")
+}
+
+model ProjectApplication {
+  id               String            @id @default(cuid())
+  projectId        String
+  expertId         String
+  proposal         String            @db.Text
+  proposedRate     Decimal?          @db.Decimal(10, 2)
+  estimatedHours   Int?
+  timelineWeeks    Int?
+  status           ApplicationStatus @default(PENDING)
+  coverLetter      String?           @db.Text
+  relevantExperience String?         @db.Text
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expert  User    @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, expertId])
+  @@map("project_applications")
+}
+
+enum ProjectType {
+  CONSULTATION
+  DEVELOPMENT
+  TRAINING
+  AUDIT
+  MAINTENANCE
+}
+
+enum ExperienceLevel {
+  JUNIOR
+  MID
+  SENIOR
+  EXPERT
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  IN_REVIEW
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// =============================================
+// CONTRACTS & PAYMENTS
+// =============================================
+
+model Contract {
+  id                  String           @id @default(cuid())
+  projectId           String
+  clientId            String
+  expertId            String
+  title               String
+  description         String?          @db.Text
+  totalAmount         Decimal          @db.Decimal(12, 2)
+  hourlyRate          Decimal?         @db.Decimal(10, 2)
+  estimatedHours      Int?
+  startDate           DateTime
+  endDate             DateTime?
+  status              ContractStatus   @default(DRAFT)
+  termsAndConditions  String?          @db.Text
+  milestones          Json?            // array of milestone objects
+  paymentSchedule     PaymentSchedule  @default(MILESTONE)
+  agentbossCommission Decimal          @default(15.00) @db.Decimal(5, 2) // percentage
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  signedAt            DateTime?
+  completedAt         DateTime?
+
+  // Relations
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  client      User        @relation("ClientContracts", fields: [clientId], references: [id], onDelete: Cascade)
+  expert      User        @relation("ExpertContracts", fields: [expertId], references: [id], onDelete: Cascade)
+  milestoneRecords Milestone[]
+  payments    Payment[]
+  conversations Conversation[]
+
+  @@map("contracts")
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  contractId  String
+  title       String
+  description String?         @db.Text
+  amount      Decimal         @db.Decimal(12, 2)
+  dueDate     DateTime?
+  status      MilestoneStatus @default(PENDING)
+  deliverables Json?          // array of deliverable objects
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  completedAt DateTime?
+  approvedAt  DateTime?
+
+  // Relations
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("milestones")
+}
+
+model Payment {
+  id                     String        @id @default(cuid())
+  contractId             String
+  milestoneId            String?
+  payerId                String
+  payeeId                String
+  amount                 Decimal       @db.Decimal(12, 2)
+  agentbossFee           Decimal       @db.Decimal(12, 2)
+  netAmount              Decimal       @db.Decimal(12, 2) // amount - agentboss_fee
+  paymentMethod          String?
+  stripePaymentIntentId  String?
+  status                 PaymentStatus @default(PENDING)
+  processedAt            DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  // Relations
+  contract  Contract   @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  milestone Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  payer     User       @relation("PayerPayments", fields: [payerId], references: [id], onDelete: Cascade)
+  payee     User       @relation("PayeePayments", fields: [payeeId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentSchedule {
+  UPFRONT
+  MILESTONE
+  HOURLY
+  COMPLETION
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// =============================================
+// AGENT MARKETPLACE
+// =============================================
+
+model Agent {
+  id                  String              @id @default(cuid())
+  creatorId           String
+  name                String
+  slug                String              @unique
+  description         String              @db.Text
+  longDescription     String?             @db.Text
+  category            AgentCategory
+  subcategory         String?
+  tags                Json?               // array of tags for search
+  pricingModel        PricingModel
+  price               Decimal?            @db.Decimal(12, 2) // base price
+  pricingTiers        Json?               // for tiered pricing
+  demoUrl             String?
+  documentationUrl    String?
+  githubUrl           String?
+  techStack           Json?               // technologies used
+  requirements        Json?               // system requirements
+  features            Json?               // array of feature descriptions
+  screenshots         Json?               // array of screenshot URLs
+  videoUrl            String?
+  status              AgentStatus         @default(DRAFT)
+  verificationStatus  VerificationStatus  @default(PENDING)
+  downloadsCount      Int                 @default(0)
+  ratingAverage       Decimal             @default(0.00) @db.Decimal(3, 2)
+  ratingCount         Int                 @default(0)
+  revenueTotal        Decimal             @default(0.00) @db.Decimal(12, 2)
+  featured            Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  publishedAt         DateTime?
+
+  // Relations
+  creator   User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  purchases AgentPurchase[]
+  reviews   Review[]
+
+  @@map("agents")
+}
+
+model AgentPurchase {
+  id               String         @id @default(cuid())
+  agentId          String
+  buyerId          String
+  licenseType      LicenseType
+  amount           Decimal        @db.Decimal(12, 2)
+  agentbossCommission Decimal     @db.Decimal(12, 2)
+  creatorEarnings  Decimal        @db.Decimal(12, 2)
+  licenseTerms     Json?          // usage rights, restrictions
+  paymentId        String?
+  status           PurchaseStatus @default(PENDING)
+  expiresAt        DateTime?      // for subscriptions
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  // Relations
+  agent  Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  buyer  User  @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@map("agent_purchases")
+}
+
+enum AgentCategory {
+  CUSTOMER_SERVICE
+  SALES
+  MARKETING
+  ANALYTICS
+  CONTENT_GENERATION
+  DATA_PROCESSING
+  AUTOMATION
+  OTHER
+}
+
+enum PricingModel {
+  ONE_TIME
+  SUBSCRIPTION
+  USAGE_BASED
+  FREEMIUM
+}
+
+enum AgentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SUSPENDED
+}
+
+enum LicenseType {
+  SINGLE_USE
+  MULTI_USE
+  ENTERPRISE
+  UNLIMITED
+}
+
+enum PurchaseStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+// =============================================
+// REVIEWS & RATINGS
+// =============================================
+
+model Review {
+  id              String       @id @default(cuid())
+  reviewerId      String
+  revieweeId      String?      // for expert reviews
+  agentId         String?      // for agent reviews
+  contractId      String?
+  rating          Int          // 1-5 scale
+  title           String?
+  comment         String?      @db.Text
+  pros            String?      @db.Text
+  cons            String?      @db.Text
+  wouldRecommend  Boolean?
+  status          ReviewStatus @default(PUBLISHED)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  reviewer User  @relation("ReviewerReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee User? @relation("RevieweeReviews", fields: [revieweeId], references: [id], onDelete: Cascade)
+  agent    Agent? @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+  FLAGGED
+  DELETED
+}
+
+// =============================================
+// COMMUNICATION
+// =============================================
+
+model Conversation {
+  id            String             @id @default(cuid())
+  projectId     String?
+  contractId    String?
+  participants  Json               // array of user IDs
+  title         String?
+  status        ConversationStatus @default(ACTIVE)
+  lastMessageAt DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  // Relations
+  project  Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contract Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String      @db.Text
+  messageType    MessageType @default(TEXT)
+  attachments    Json?       // array of file references
+  readBy         Json        @default("[]") // array of user IDs who read the message
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  CLOSED
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+  MILESTONE_UPDATE
+}
+
+// =============================================
+// NOTIFICATIONS
+// =============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  data      Json?            // additional data for the notification
+  read      Boolean          @default(false)
+  actionUrl String?          // where to redirect when clicked
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  PROJECT_APPLICATION
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  CONTRACT_SIGNED
+  MILESTONE_COMPLETED
+  PAYMENT_RECEIVED
+  NEW_MESSAGE
+  AGENT_PURCHASED
+  REVIEW_RECEIVED
+}
+
+// =============================================
+// SYSTEM TABLES
+// =============================================
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  userId       String?
+  action       String
+  resourceType String
+  resourceId   String?
+  oldValues    Json?
+  newValues    Json?
+  ipAddress    String?
+  userAgent    String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       Json
+  description String?  @db.Text
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedBy   String?
+
+  @@map("system_settings")
+}
