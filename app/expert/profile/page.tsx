@@ -10,10 +10,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ExpertProfileEdit() {
   const { data: session } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [formData, setFormData] = useState({
@@ -122,15 +124,26 @@ export default function ExpertProfileEdit() {
       })
 
       if (response.ok) {
-        alert('Profile updated successfully!')
+        toast({
+          title: "Profile Updated",
+          description: "Your expert profile has been updated successfully.",
+        })
         router.push('/dashboard')
       } else {
         const error = await response.json()
-        alert(`Error: ${error.message}`)
+        toast({
+          title: "Update Failed",
+          description: error.message || "Failed to update profile. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Profile update error:', error)
-      alert('An error occurred while updating your profile')
+      toast({
+        title: "Update Failed",
+        description: "An error occurred while updating your profile. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }

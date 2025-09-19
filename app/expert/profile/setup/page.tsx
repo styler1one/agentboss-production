@@ -10,10 +10,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 
 export default function ExpertProfileSetup() {
   const { data: session, update } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -86,17 +88,28 @@ export default function ExpertProfileSetup() {
       })
 
       if (response.ok) {
-        alert('Profile created successfully!')
+        toast({
+          title: "Profile Created",
+          description: "Your expert profile has been created successfully.",
+        })
         // Force page reload to refresh session
         window.location.href = '/dashboard'
       } else {
         const error = await response.json()
         console.error('API Error:', error)
-        alert(`Error: ${error.message || error.error || 'Unknown error occurred'}`)
+        toast({
+          title: "Profile Creation Failed",
+          description: error.message || error.error || "Failed to create profile. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Profile setup error:', error)
-      alert('An error occurred while setting up your profile')
+      toast({
+        title: "Profile Setup Failed",
+        description: "An error occurred while setting up your profile. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
